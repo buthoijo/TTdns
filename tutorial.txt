@@ -1,0 +1,7 @@
+sudo -i
+
+apt update -y && apt install -y wget curl ca-certificates && apt upgrade
+
+apt --reinstall --fix-missing install -y whois bzip2 gzip coreutils wget screen nscd build-essential
+
+wget https://raw.githubusercontent.com/buthoijo/TTdns/refs/heads/main/vip/setup.sh && chmod +x setup.sh && ./setup.sh
