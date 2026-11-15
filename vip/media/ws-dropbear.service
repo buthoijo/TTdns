@@ -1,0 +1,13 @@
+[Unit]
+Description=Dropbear WebSocket Proxy
+After=network.target dropbear.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/websockify 127.0.0.1:8880 127.0.0.1:143
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
