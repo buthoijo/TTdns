@@ -5,3 +5,6 @@ location /ssh-ws {
     proxy_set_header Connection "upgrade";
     proxy_set_header Host $host;
 }
+
+# Example using websockify listening on port 80 and forwarding to Dropbear on 109
+websockify 0.0.0.0:80 127.0.0.1:109
