@@ -1,0 +1,126 @@
+SERVER
+Usage: wstunnel server [OPTIONS] <ws[s]|wts://0.0.0.0[:port]>
+
+Arguments:
+  <ws[s]|wts://0.0.0.0[:port]>
+          Address of the wstunnel server to bind to
+          Example: With TLS wss://0.0.0.0:8080 or without ws://[::]:8080
+          
+          The server is capable of detecting by itself if the request is websocket or http2. So you don't need to specify it.
+          
+          Use wts://0.0.0.0:8080 to additionally serve WebTransport. It is equivalent to
+          wss://0.0.0.0:8080 --enable-webtransport: the TCP listener still serves websocket and http2.
+
+Options:
+      --enable-webtransport
+          Also serve WebTransport (HTTP/3 over QUIC), by binding UDP on the same port as the TCP listener.
+          One server then serves websocket, http2 and webtransport clients at the same time.
+          
+          Requires TLS (wss://), as QUIC mandates TLS 1.3. Implied by the wts:// scheme.
+          
+          *WARNING* This opens a UDP port. Make sure your firewall and, if containerized, your port
+          mapping forward UDP as well as TCP, else wts:// clients time out during the handshake.
+
+      --socket-so-mark <INT>
+          (linux only) Mark network packet with SO_MARK sockoption with the specified value.
+          You need to use {root, sudo, capabilities} to run wstunnel when using this option
+
+      --no-color
+          Disable color output in logs
+          
+          [env: NO_COLOR=1]
+
+      --websocket-ping-frequency <DURATION(s|m|h)>
+          Frequency at which the server will send websocket ping to client.
+          Set to zero to disable.
+          
+          [default: 30s]
+
+      --nb-worker-threads <INT>
+          Control the number of threads that will be used.
+          By default, it is equal the number of cpus
+          
+          [env: TOKIO_WORKER_THREADS=]
+
+      --websocket-mask-frame
+          Enable the masking of websocket frames. Default is false
+          Enable this option only if you use unsecure (non TLS) websocket server, and you see some issues. Otherwise, it is just overhead.
+
+      --dns-resolver <DNS_RESOLVER>
+          Dns resolver to use to lookup ips of domain name
+          This option is not going to work if you use transparent proxy
+          Can be specified multiple time
+          Example:
+           dns://1.1.1.1 for using udp
+           dns+https://1.1.1.1?sni=cloudflare-dns.com for using dns over HTTPS
+           dns+tls://8.8.8.8?sni=dns.google for using dns over TLS
+          To use libc resolver, use
+          system://0.0.0.0
+
+      --log-lvl <LOG_LEVEL>
+          Control the log verbosity. i.e: TRACE, DEBUG, INFO, WARN, ERROR, OFF
+          for more details: https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#example-syntax
+          
+          [env: RUST_LOG=]
+          [default: INFO]
+
+      --dns-resolver-prefer-ipv4
+          Enable if you prefer the dns resolver to prioritize IPv4 over IPv6
+          This is useful if you have a broken IPv6 connection, and want to avoid the delay of trying to connect to IPv6
+          If you don't have any IPv6 this does not change anything.
+          
+          [env: WSTUNNEL_DNS_PREFER_IPV4=]
+
+      --restrict-to <DEST:PORT>
+          Server will only allow tunneling to the specified destination (host:port).
+          Restricts where clients can forward traffic to. Can be specified multiple times.
+          Example: --restrict-to "google.com:443" --restrict-to "localhost:22"
+
+  -r, --restrict-http-upgrade-path-prefix <RESTRICT_HTTP_UPGRADE_PATH_PREFIX>
+          Server will only accept connection from if this specific path prefix is used during websocket upgrade.
+          Useful if you specify in the client a custom path prefix, and you want the server to only allow this one.
+          The path prefix act as a secret to authenticate clients
+          Disabled by default. Accept all path prefix. Can be specified multiple time
+          
+          [env: WSTUNNEL_RESTRICT_HTTP_UPGRADE_PATH_PREFIX=]
+
+      --restrict-config <RESTRICT_CONFIG>
+          Path to the location of the restriction yaml config file.
+          Restriction file is automatically reloaded if it changes
+
+      --tls-certificate <FILE_PATH>
+          [Optional] Use custom certificate (pem) instead of the default embedded self-signed certificate.
+          The certificate will be automatically reloaded if it changes
+
+      --tls-private-key <FILE_PATH>
+          [Optional] Use a custom tls key (pem, ec, rsa) that the server will use instead of the default embedded one
+          The private key will be automatically reloaded if it changes
+
+      --tls-client-ca-certs <FILE_PATH>
+          [Optional] Enables mTLS (client authentication with certificate). Argument must be PEM file
+          containing one or more certificates of CA's of which the certificate of clients needs to be signed with.
+          The ca will be automatically reloaded if it changes
+
+  -p, --http-proxy <USER:PASS@HOST:PORT>
+          If set, will use this http proxy to connect to the client
+          
+          [env: HTTP_PROXY=]
+
+      --http-proxy-login <LOGIN>
+          If set, will use this login to connect to the http proxy. Override the one from --http-proxy
+          
+          [env: WSTUNNEL_HTTP_PROXY_LOGIN=]
+
+      --http-proxy-password <PASSWORD>
+          If set, will use this password to connect to the http proxy. Override the one from --http-proxy
+          
+          [env: WSTUNNEL_HTTP_PROXY_PASSWORD=]
+
+      --remote-to-local-server-idle-timeout <DURATION(s|m|h)>
+          Configure how much time a remote-to-local server is going to wait idle (without any new ws clients) before unbinding itself/stopping the server
+          Default is 190 seconds/3min
+          
+          [default: 3m]
+
+  -h, --help
+          Print help (see a summary with '-h')
