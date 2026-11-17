@@ -158,26 +158,11 @@ echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
 
-systemctl stop udpgw 2>/dev/null || true
-pkill -9 -f badvpn-udpgw 2>/dev/null || true
-rm -f /usr/local/bin/badvpn-udpgw
-
-wget -qO /usr/local/bin/badvpn-udpgw "https://githubusercontent.com" || \
-wget -qO /usr/local/bin/badvpn-udpgw "https://github.com" || {
-    echo -e "${RED}[ERROR] Failed to download BadVPN UDPGW dari semua mirror!${NC}"
-    exit 1
-}
-
-# Validasi agar tidak menyimpan file kosong
-if [[ ! -s /usr/local/bin/badvpn-udpgw ]]; then
-    echo -e "${RED}[ERROR] File badvpn-udpgw kosong (0 bytes)!${NC}"
-    exit 1
-fi
-
+mkdir -p /tmp/badvpn-build/build && cd /tmp/badvpn-build/build
+cmake .. -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1
+make -j"$(nproc)"
+cp udpgw/badvpn-udpgw /usr/local/bin/badvpn-udpgw
 chmod +x /usr/local/bin/badvpn-udpgw
-
-# Bersihkan folder kompilasi sementara
-cd /root || true
 rm -rf /tmp/badvpn-build
 
 # ================= UDPGW SERVICE =================
