@@ -158,16 +158,18 @@ echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
 
-mkdir -p /tmp/badvpn-build/build && cd /tmp/badvpn-build/build
-cmake .. -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1
-make -j"$(nproc)"
-cp udpgw/badvpn-udpgw /usr/local/bin/badvpn-udpgw
+wget -qO /usr/local/bin/badvpn-udpgw \
+"${RELEASE_URL}/badvpn-udpgw" || {
+    echo -e "${RED}[ERROR] Failed to download BadVPN UDPGW${NC}"
+    exit 1
+}
+
 chmod +x /usr/local/bin/badvpn-udpgw
-rm -rf /tmp/badvpn-build
 
 # ================= UDPGW SERVICE =================
+
 cp ~/AutoscriptXRAY/sshws/udpgw.service \
-   /etc/systemd/system/
+/etc/systemd/system/
 
 # ================= INSTALL UDP CUSTOM =================
 echo ""
