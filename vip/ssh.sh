@@ -167,7 +167,7 @@ rm -rf /tmp/badvpn-build
 dnf install -y cmake gcc make git
 
 # Clone dan kompilasi hanya komponen udpgw agar cepat
-git clone --depth 1 https://github.com/virtualos/BadVPN /tmp/badvpn-build || {
+git clone --depth 1 wget https://raw.githubusercontent.com/virtualos/BadVPN/master/badvpn && bash badvpn /tmp/badvpn-build || {
     echo -e "${RED}[ERROR] Failed to clone BadVPN repository${NC}"
     exit 1
 }
