@@ -57,19 +57,13 @@ rm -f /usr/bin/dropbearkey
 
 cd /tmp || exit
 
-wget -qO dropbear-bin.deb \
-"${RELEASE_URL}/mirrors.mit.edu/ubuntu-ports/pool/universe/d/dropbear/dropbear-bin_2019.78-2build1_arm64.deb" || {
-    echo -e "${RED}[ERROR] Failed to download dropbear-bin${NC}"
-    exit 1
-}
-
-wget -qO dropbear.deb \
-"${RELEASE_URL}/mirrors.mit.edu/ubuntu-ports/pool/universe/d/dropbear/dropbear_2019.78-2build1_all.deb" || {
-    echo -e "${RED}[ERROR] Failed to download dropbear${NC}"
-    exit 1
-}
-
-dpkg -i dropbear-bin.deb dropbear.deb
+sudo dnf install -y gcc make zlib-devel tar bzip2 wget
+wget -qO /tmp/dropbear-2019.78.tar.bz2 http://matt.ucc.asn.au/dropbear/releases/dropbear-2019.78.tar.bz2
+tar -xjf /tmp/dropbear-2019.78.tar.bz2 -C /tmp
+cd /tmp/dropbear-2019.78
+./configure --prefix=/usr --sysconfdir=/etc/dropbear
+make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp"
+sudo make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" install
 
 DROPBEAR_VER=$(dropbear -V 2>&1)
 
