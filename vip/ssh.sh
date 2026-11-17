@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# Setup SSH WebSocket + UDPGW - by znandev
+# Setup SSH WebSocket + UDPGW - Adapted for Amazon Linux 2023
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
 DEPS_VERSION="deps-v2"
-RELEASE_URL="https://github.com/znandev/AutoscriptXRAY/releases/download/${DEPS_VERSION}"
+RELEASE_URL="https://github.com{DEPS_VERSION}"
 
 clear
-
-echo -e "${GREEN}▶️ Installing SSH + WebSocket...${NC}"
+echo -e "${GREEN}▶️ Installing SSH + WebSocket on Amazon Linux 2023...${NC}"
 sleep 1
 
 # ================= VALIDATION =================
@@ -21,49 +20,53 @@ if [[ ! -f ~/AutoscriptXRAY/config/issue.net ]]; then
     exit 1
 fi
 
+# ================= CLEANUP OLD PYTHON WS =================
+
+systemctl stop ws-dropbear ws-stunnel 2>/dev/null || true
+systemctl disable ws-dropbear ws-stunnel 2>/dev/null || true
+rm -f /etc/systemd/system/ws-dropbear.service /etc/systemd/system/ws-stunnel.service
+
 # ================= INSTALL DEPENDENCY =================
 
-apt update -y
-
-apt install -y \
+dnf update -y
+dnf install -y \
     openssh-server \
-    stunnel4 \
+    stunnel \
     curl \
     wget \
     python3 \
     screen \
     git \
-    golang-go \
-    libtomcrypt1 \
-    libtommath1
+    golang \
+    gcc \
+    make \
+    zlib-devel \
+    tar \
+    bzip2
 
 mkdir -p /usr/local/bin
 
 # ================= INSTALL DROPBEAR =================
 
 echo ""
-echo -e "${GREEN}[INFO] Installing Dropbear...${NC}"
+echo -e "${GREEN}[INFO] Installing Dropbear 2019.78...${NC}"
 echo ""
 
 systemctl stop dropbear 2>/dev/null || true
-
-apt purge -y \
-    dropbear \
-    dropbear-bin >/dev/null 2>&1 || true
 
 rm -f /usr/sbin/dropbear
 rm -f /usr/bin/dbclient
 rm -f /usr/bin/dropbearkey
 
-cd /tmp || exit
+cd /tmp || exit 1
+rm -rf /tmp/dropbear-2019.78*
 
-sudo dnf install -y gcc make zlib-devel tar bzip2 wget
-wget -qO /tmp/dropbear-2019.78.tar.bz2 http://matt.ucc.asn.au/dropbear/releases/dropbear-2019.78.tar.bz2
+wget -qO /tmp/dropbear-2019.78.tar.bz2 https://ucc.asn.au
 tar -xjf /tmp/dropbear-2019.78.tar.bz2 -C /tmp
-cd /tmp/dropbear-2019.78
+cd /tmp/dropbear-2019.78 || exit 1
 ./configure --prefix=/usr --sysconfdir=/etc/dropbear
 make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp"
-sudo make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" install
+make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" install
 
 DROPBEAR_VER=$(dropbear -V 2>&1)
 
@@ -117,16 +120,14 @@ echo ""
 echo -e "${GREEN}[INFO] Building Go WebSocket Services...${NC}"
 echo ""
 
-if ! command -v go >/dev/null 2>&1; then
-    apt install -y golang-go
-fi
+systemctl stop dropbear-ws stunnel-ws 2>/dev/null || true
 
 cd ~/AutoscriptXRAY/internal/go || exit 1
 
 go build -ldflags="-s -w" \
     -o /usr/local/bin/dropbearws \
     ./dropbear-ws || {
-    echo -e "${RED}[ERROR] Failed to build sshws${NC}"
+    echo -e "${RED}[ERROR] Failed to build dropbearws${NC}"
     exit 1
 }
 
@@ -146,12 +147,15 @@ cp ~/AutoscriptXRAY/internal/go/dropbear-ws.service \
 cp ~/AutoscriptXRAY/internal/go/stunnel-ws.service \
     /etc/systemd/system/stunnel-ws.service
 
-
 # ================= INSTALL BADVPN UDPGW =================
 
 echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
+
+systemctl stop udpgw 2>/dev/null || true
+pkill -9 -f badvpn-udpgw 2>/dev/null || true
+rm -f /usr/local/bin/badvpn-udpgw
 
 wget -qO /usr/local/bin/badvpn-udpgw \
 "${RELEASE_URL}/badvpn-udpgw" || {
@@ -171,6 +175,10 @@ cp ~/AutoscriptXRAY/sshws/udpgw.service \
 echo ""
 echo -e "${GREEN}[INFO] Installing UDP Custom...${NC}"
 echo ""
+
+systemctl stop udp-custom 2>/dev/null || true
+pkill -9 -f udp-custom 2>/dev/null || true
+rm -f /usr/local/bin/udp-custom
 
 wget -qO /usr/local/bin/udp-custom \
 "${RELEASE_URL}/udp-custom-linux-amd64" || {
@@ -205,8 +213,8 @@ systemctl daemon-reexec
 
 # ================= ENABLE SERVICES =================
 
-systemctl enable ssh
-systemctl restart ssh
+systemctl enable sshd
+systemctl restart sshd
 
 systemctl enable dropbear
 systemctl restart dropbear
@@ -228,15 +236,16 @@ systemctl restart udp-custom
 sleep 2
 
 for svc in \
-    ssh \
+    sshd \
     dropbear \
-    ws-dropbear \
-    ws-stunnel \
+    dropbear-ws \
+    stunnel-ws \
     udpgw \
     udp-custom
 do
     systemctl is-active --quiet "$svc" || {
         echo -e "${RED}[ERROR] Service $svc failed!${NC}"
+        journalctl -u "$svc" -n 10 --no-pager
         exit 1
     }
 done
@@ -262,10 +271,6 @@ pkill -9 -u "$USER"
 EOF
 
 chmod +x /etc/profile.d/no-login.sh
-
-# ================= HOLD DROPBEAR =================
-
-apt-mark hold dropbear dropbear-bin >/dev/null 2>&1 || true
 
 # ================= INSTALL LOG =================
 
@@ -300,7 +305,7 @@ echo ""
 echo -e "${GREEN}[INFO] Service Status:${NC}"
 
 systemctl --no-pager --type=service | \
-grep -E 'dropbear|ssh|ws|udpgw|udp|dropbear-ws|stunnel-ws'
+grep -E 'dropbear|sshd|udpgw|udp|dropbear-ws|stunnel-ws'
 
 echo ""
 dropbear -V
