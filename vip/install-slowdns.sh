@@ -38,7 +38,7 @@ echo ""
 # 1. Paket dasar
 export DEBIAN_FRONTEND=noninteractive
 sudo yum update -y
-sudo yum install -y git golang curl iproute2
+sudo yum install -y git golang curl iproute
 
 # 2. Pastikan UDP 53 bebas.
 #    Kalau yang memegang hanya stub listener systemd-resolved
