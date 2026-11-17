@@ -155,20 +155,39 @@ cp ~/AutoscriptXRAY/internal/go/stunnel-ws.service \
 
 # ================= INSTALL BADVPN UDPGW =================
 echo ""
-echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
+echo -e "${GREEN}[INFO] Building & Installing BadVPN UDPGW from source...${NC}"
 echo ""
 
 systemctl stop udpgw 2>/dev/null || true
 pkill -9 -f badvpn-udpgw 2>/dev/null || true
 rm -f /usr/local/bin/badvpn-udpgw
+rm -rf /tmp/badvpn-build
 
-wget -qO /usr/local/bin/badvpn-udpgw \
-    "${RELEASE_URL}/badvpn-udpgw" || {
-    echo -e "${RED}[ERROR] Failed to download BadVPN UDPGW${NC}"
+# Install cmake jika belum tersedia di Amazon Linux 2023
+dnf install -y cmake gcc make git
+
+# Clone dan kompilasi hanya komponen udpgw agar cepat
+git clone --depth 1 https://github.com /tmp/badvpn-build || {
+    echo -e "${RED}[ERROR] Failed to clone BadVPN repository${NC}"
+    exit 1
+}
+
+mkdir -p /tmp/badvpn-build/build
+cd /tmp/badvpn-build/build || exit 1
+
+cmake .. -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1
+make -j"$(nproc)"
+
+cp udpgw/badvpn-udpgw /usr/local/bin/badvpn-udpgw || {
+    echo -e "${RED}[ERROR] Failed to compile BadVPN UDPGW${NC}"
     exit 1
 }
 
 chmod +x /usr/local/bin/badvpn-udpgw
+
+# Bersihkan folder kompilasi sementara
+cd /root || true
+rm -rf /tmp/badvpn-build
 
 # ================= UDPGW SERVICE =================
 cp ~/AutoscriptXRAY/sshws/udpgw.service \
