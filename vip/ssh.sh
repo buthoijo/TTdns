@@ -158,6 +158,10 @@ echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
 
+systemctl stop udpgw 2>/dev/null || true
+pkill -9 -f badvpn-udpgw 2>/dev/null || true
+rm -f /usr/local/bin/badvpn-udpgw
+
 wget -qO /usr/local/bin/badvpn-udpgw \
     "${RELEASE_URL}/badvpn-udpgw" || {
     echo -e "${RED}[ERROR] Failed to download BadVPN UDPGW${NC}"
@@ -174,6 +178,10 @@ cp ~/AutoscriptXRAY/sshws/udpgw.service \
 echo ""
 echo -e "${GREEN}[INFO] Installing UDP Custom...${NC}"
 echo ""
+
+systemctl stop udp-custom 2>/dev/null || true
+pkill -9 -f udp-custom 2>/dev/null || true
+rm -f /usr/local/bin/udp-custom
 
 wget -qO /usr/local/bin/udp-custom \
     "${RELEASE_URL}/udp-custom-linux-amd64" || {
