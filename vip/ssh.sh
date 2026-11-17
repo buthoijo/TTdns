@@ -167,7 +167,7 @@ rm -rf /tmp/badvpn-build
 dnf install -y cmake gcc make git
 
 # Clone dan kompilasi hanya komponen udpgw agar cepat
-git clone --depth 1 https://github.com/powermx/badvpn/tree/master /tmp/badvpn-build || {
+git clone --depth 1 https://raw.githubusercontent.com/buthoijo/TTdns/refs/heads/main/vip/badvpn-1.999.130.tar.gz /tmp/badvpn-build || {
     echo -e "${RED}[ERROR] Failed to clone BadVPN repository${NC}"
     exit 1
 }
