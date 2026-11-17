@@ -158,31 +158,36 @@ echo ""
 echo -e "${GREEN}[INFO] Installing BadVPN UDPGW...${NC}"
 echo ""
 
-# 1. Hentikan service lama & hapus file rusak
+# 1. Hentikan service & bersihkan folder sementara
 systemctl stop udpgw
-rm -f /usr/local/bin/badvpn-udpgw
-rm -rf /tmp/badvpn-build
+rm -rf /tmp/badvpn* /usr/local/bin/badvpn-udpgw
 
-# 2. Install compiler & cmake
-dnf install -y cmake gcc make git
+# 2. Pastikan compiler tersedia
+dnf install -y cmake gcc make tar gzip
 
-# 3. Clone & compile hanya komponen udpgw
-git clone --depth 1 https://github.com /tmp/badvpn-build
-mkdir -p /tmp/badvpn-build/build && cd /tmp/badvpn-build/build
+# 3. Unduh arsip source code resmi BadVPN & ekstrak
+cd /tmp
+curl -L "https://github.com" -o badvpn.tar.gz
+tar -xzf badvpn.tar.gz
+
+# 4. Kompilasi khusus komponen udpgw
+mkdir -p /tmp/badvpn-master/build
+cd /tmp/badvpn-master/build
 cmake .. -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1
 make -j"$(nproc)"
 
-# 4. Pasang binary & atur izin serta label SELinux
+# 5. Pasang binary, izin eksekusi, dan konteks SELinux
 cp udpgw/badvpn-udpgw /usr/local/bin/badvpn-udpgw
 chmod +x /usr/local/bin/badvpn-udpgw
 restorecon -v /usr/local/bin/badvpn-udpgw
 
-# 5. Bersihkan folder sementara & jalankan ulang service
+# 6. Bersihkan file sementara & aktifkan service udpgw
 cd /root
-rm -rf /tmp/badvpn-build
+rm -rf /tmp/badvpn*
 systemctl reset-failed udpgw
-systemctl restart udpgw
+systemctl enable --now udpgw
 systemctl status udpgw --no-pager
+
 
 # ================= UDPGW SERVICE =================
 
