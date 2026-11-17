@@ -62,10 +62,19 @@ rm -f /usr/bin/dropbearkey
 rm -rf /tmp/dropbear-2019.78*
 
 cd /tmp || exit 1
-wget -qO /tmp/dropbear-2019.78.tar.bz2 http://ucc.asn.au || {
+
+# Coba download dari HTTPS resmi, jika gagal gunakan mirror resmi
+wget -qO /tmp/dropbear-2019.78.tar.bz2 "https://matt.ucc.asn.au/dropbear/releases/dropbear-2019.78.tar.bz2" || \
+wget -qO /tmp/dropbear-2019.78.tar.bz2 "https://dropbear.nl" || {
     echo -e "${RED}[ERROR] Failed to download Dropbear source!${NC}"
     exit 1
 }
+
+# Validasi ukuran & format file sebelum ekstrak
+if ! bzip2 -t /tmp/dropbear-2019.78.tar.bz2 >/dev/null 2>&1; then
+    echo -e "${RED}[ERROR] Downloaded file is corrupted or not a valid bz2 archive!${NC}"
+    exit 1
+fi
 
 tar -xjf /tmp/dropbear-2019.78.tar.bz2 -C /tmp
 cd /tmp/dropbear-2019.78 || exit 1
