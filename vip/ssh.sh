@@ -193,11 +193,19 @@ systemctl stop udp-custom 2>/dev/null || true
 pkill -9 -f udp-custom 2>/dev/null || true
 rm -f /usr/local/bin/udp-custom
 
-wget -qO /usr/local/bin/udp-custom \
-    "${RELEASE_URL}/udp-custom-linux-amd64" || {
-    echo -e "${RED}[ERROR] Failed to download UDP Custom${NC}"
+# Download dari mirror publik aktif dengan fallback otomatis
+wget -qO /usr/local/bin/udp-custom "https://githubusercontent.com" || \
+wget -qO /usr/local/bin/udp-custom "https://githubusercontent.com" || \
+wget -qO /usr/local/bin/udp-custom "https://github.com" || {
+    echo -e "${RED}[ERROR] Failed to download UDP Custom dari semua mirror!${NC}"
     exit 1
 }
+
+# Validasi agar tidak menyimpan file kosong
+if [[ ! -s /usr/local/bin/udp-custom ]]; then
+    echo -e "${RED}[ERROR] File udp-custom kosong (0 bytes)!${NC}"
+    exit 1
+fi
 
 chmod +x /usr/local/bin/udp-custom
 
