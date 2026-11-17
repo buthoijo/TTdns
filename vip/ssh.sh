@@ -58,13 +58,13 @@ rm -f /usr/bin/dropbearkey
 cd /tmp || exit
 
 wget -qO dropbear-bin.deb \
-"${RELEASE_URL}/dropbear-bin_2019.78-2build1_amd64.deb" || {
+"${RELEASE_URL}/mirrors.mit.edu/ubuntu-ports/pool/universe/d/dropbear/dropbear-bin_2019.78-2build1_arm64.deb" || {
     echo -e "${RED}[ERROR] Failed to download dropbear-bin${NC}"
     exit 1
 }
 
 wget -qO dropbear.deb \
-"${RELEASE_URL}/dropbear_2019.78-2build1_all.deb" || {
+"${RELEASE_URL}/mirrors.mit.edu/ubuntu-ports/pool/universe/d/dropbear/dropbear_2019.78-2build1_all.deb" || {
     echo -e "${RED}[ERROR] Failed to download dropbear${NC}"
     exit 1
 }
