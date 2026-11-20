@@ -702,10 +702,10 @@ clear
 print_install "Menginstall Vnstat"
 apt-get install "${APT_ARGS[@]}" vnstat libsqlite3-dev > /dev/null 2>&1 || true
 if ! command -v vnstat >/dev/null 2>&1; then
-wget -q humdi.net -O /tmp/vnstat.tar.gz 
-&& tar zxf /tmp/vnstat.tar.gz -C /tmp 
-&& (cd /tmp/vnstat-2.12 && ./configure --prefix=/usr --sysconfdir=/etc && make && make install)
-rm -f /tmp/vnstat.tar.gz
+    wget -q https://humdi.net -O /tmp/vnstat.tar.gz \
+    && tar zxf /tmp/vnstat.tar.gz -C /tmp \
+    && (cd /tmp/vnstat-* && ./configure --prefix=/usr --sysconfdir=/etc && make && make install)
+    rm -rf /tmp/vnstat.tar.gz /tmp/vnstat-*
 fi
 /etc/init.d/vnstat restart >/dev/null 2>&1 || true
 vnstat -u -i $NET
