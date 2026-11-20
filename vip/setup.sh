@@ -767,7 +767,9 @@ run_file "media/bbr.sh" || true
 print_success "Swap 1 G"
 }
 
+
 FIX 2: Ganti ws-epro (yang deadlock) dengan Python WebSocket Bridge untuk SSHWS (10015) & OVPNWS (10012)
+# FIX 2: Ganti ws-epro (yang deadlock) dengan Python WebSocket Bridge untuk SSHWS (10015) & OVPNWS (10012)
 
 function ins_epro(){
 clear
@@ -785,38 +787,38 @@ TARGET_PORT = 109
 RESPONSE = b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n"
 
 def handle_client(client_sock):
-try:
-request = client_sock.recv(4096)
-if not request:
-client_sock.close()
-return
-target_sock = socket.create_connection((TARGET_HOST, TARGET_PORT))
-client_sock.sendall(RESPONSE)
-sockets = [client_sock, target_sock]
-while True:
-r, _, _ = select.select(sockets, [], [], 60)
-if not r:
-break
-for s in r:
-data = s.recv(8192)
-if not data:
-return
-if s is client_sock:
-target_sock.sendall(data)
-else:
-client_sock.sendall(data)
-except Exception:
-pass
-finally:
-client_sock.close()
+    try:
+        request = client_sock.recv(4096)
+        if not request:
+            client_sock.close()
+            return
+        target_sock = socket.create_connection((TARGET_HOST, TARGET_PORT))
+        client_sock.sendall(RESPONSE)
+        sockets = [client_sock, target_sock]
+        while True:
+            r, _, _ = select.select(sockets, [], [], 60)
+            if not r:
+                break
+            for s in r:
+                data = s.recv(8192)
+                if not data:
+                    return
+                if s is client_sock:
+                    target_sock.sendall(data)
+                else:
+                    client_sock.sendall(data)
+    except Exception:
+        pass
+    finally:
+        client_sock.close()
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind((LISTENING_ADDR, LISTENING_PORT))
 server.listen(128)
 while True:
-conn, _ = server.accept()
-threading.Thread(target=handle_client, args=(conn,), daemon=True).start()
+    conn, _ = server.accept()
+    threading.Thread(target=handle_client, args=(conn,), daemon=True).start()
 PYEOF
 
 sed -e 's/10015/10012/g' -e 's/109/1194/g' /usr/local/bin/ws-ssh.py > /usr/local/bin/ws-ovpn.py
@@ -846,18 +848,15 @@ fetch_file "media/ftvpn" "/usr/sbin/ftvpn" >/dev/null 2>&1
 chmod +x /usr/sbin/ftvpn
 
 # Memblokir trafik BitTorrent dan peer-to-peer menggunakan aturan iptables
-for str in "get_peers" "announce_peer"
-"find_node" "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce.php?passkey=" "torrent" "announce" "info_hash"; do
-iptables -A FORWARD -m string --string "$str" --algo bm -j DROP
+for str in "get_peers" "announce_peer" "find_node" "BitTorrent" "BitTorrent protocol" "peer_id=" ".torrent" "announce.php?passkey=" "torrent" "announce" "info_hash"; do
+    iptables -A FORWARD -m string --string "$str" --algo bm -j DROP
 done
 
 iptables-save > /etc/iptables.up.rules
 iptables-restore -t < /etc/iptables.up.rules
 netfilter-persistent save
 netfilter-persistent reload
-
-
-
+}
 
 
 
