@@ -400,7 +400,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get remove --purge "${APT_ARGS[@]}" speedtest-cli >/dev/null 2>&1 || true
 apt-get install "${APT_ARGS[@]}" curl ca-certificates gnupg apt-transport-https >/dev/null 2>&1 || true
 if ! /usr/bin/speedtest --version 2>&1 | grep -qi "Ookla"; then
-curl -fsSL packagecloud.io -o /tmp/ookla-speedtest-install.sh >/dev/null 2>&1 && 
+curl -fsSL packagecloud.io -o /tmp/ookla-speedtest-install.sh >/dev/null 2>&1 &&
 bash /tmp/ookla-speedtest-install.sh >/dev/null 2>&1 || true
 apt-get update -y >/dev/null 2>&1 || true
 apt-get install "${APT_ARGS[@]}" speedtest >/dev/null 2>&1 || true
@@ -735,7 +735,7 @@ mkdir -p /root/.config/rclone
 printf "q\n" | rclone config >/dev/null 2>&1 || true
 cat >/etc/msmtprc <<'EOF'
 
-Konfigurasi email backup dinonaktifkan secara default.
+# Konfigurasi email backup dinonaktifkan secara default.
 
 EOF
 chmod 600 /etc/msmtprc
@@ -768,7 +768,7 @@ print_success "Swap 1 G"
 }
 
 
-FIX 2: Ganti ws-epro (yang deadlock) dengan Python WebSocket Bridge untuk SSHWS (10015) & OVPNWS (10012)
+# FIX 2: Ganti ws-epro (yang deadlock) dengan Python WebSocket Bridge untuk SSHWS (10015) & OVPNWS (10012)
 # FIX 2: Ganti ws-epro (yang deadlock) dengan Python WebSocket Bridge untuk SSHWS (10015) & OVPNWS (10012)
 
 function ins_epro(){
@@ -857,8 +857,5 @@ iptables-restore -t < /etc/iptables.up.rules
 netfilter-persistent save
 netfilter-persistent reload
 }
-
-
-
 
 
