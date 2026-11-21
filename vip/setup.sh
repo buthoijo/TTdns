@@ -495,6 +495,27 @@ bash -c "$(curl -L github.com)" @ install --version "$latest_version" --without-
 systemctl stop xray xray.service xray@.service >/dev/null 2>&1 || true
 systemctl disable xray xray.service xray@.service >/dev/null 2>&1 || true
 
+python3 - << 'PYEOF'
+with open("/etc/nginx/conf.d/xray.conf", "r") as f:
+    content = f.read()
+if "location ~ ^/(ovpn|openvpn)" not in content:
+    target = "    location / {\n        proxy_http_version 1.1;\n        proxy_redirect off;\n        proxy_pass http://127.0.0.1:10015;"
+    ovpn_block = """    location ~ ^/(ovpn|openvpn) {
+        proxy_http_version 1.1;
+        proxy_redirect off;
+        proxy_pass http://127.0.0.1:10012;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+    }
+""" + target
+    content = content.replace(target, ovpn_block, 1)
+    with open("/etc/nginx/conf.d/xray.conf", "w") as f:
+        f.write(content)
+PYEOF
+
 mkdir -p /usr/local/share/xray
 wget -q -O /usr/local/share/xray/geosite.dat "github.com" >/dev/null 2>&1 || true
 wget -q -O /usr/local/share/xray/geoip.dat "github.com" >/dev/null 2>&1 || true
@@ -858,4 +879,29 @@ netfilter-persistent save
 netfilter-persistent reload
 }
 
+# ==========================================
+# EKSEKUSI SELURUH PROSES INSTALASI
+# ==========================================
+is_root
+first_setup
+nginx_install
+base_package
+install_speedtest_ookla
+make_folder_xray
+pasang_ssl
+install_xray
+ssh
+udp_mini
+ssh_slow
+ins_SSHD
+ins_dropbear
+ins_vnstat
+ins_openvpn
+ins_backup
+ins_swab
+ins_epro
+unify_versions
+restart_system
 
+secs_to_human "$(($(date +%s) - ${start}))"
+echo -e "${OK} Semua proses instalasi selesai! Silakan reboot VPS Anda."
